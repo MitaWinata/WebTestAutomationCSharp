@@ -1,0 +1,520 @@
+﻿Discovering target: Default
+Discovering tests from assembly: C:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\bin\Debug\SearchWorkflows.dll
+Appdomain Disposed
+Test Suite Dump
+#0: SearchWorflows/Default - 
+#1: Default - 
+#2: SearchWorkflows - 
+#3: Huur Tests - 
+#12: koop Tests - 
+#21: Nieuwbouw Tests - 
+#24: Recreatie Tests - 
+#4: City, default radius and default price search - TestAssembly:SearchWorkflows/Feature:Huur+Tests/Scenario:City%2c+default+radius+and+default+price+search
+#5: City, radius and default price search - TestAssembly:SearchWorkflows/Feature:Huur+Tests/Scenario:City%2c+radius+and+default+price+search
+#6: City, radius and price range search - TestAssembly:SearchWorkflows/Feature:Huur+Tests/Scenario:City%2c+radius+and+price+range+search
+#7: City, radius and minimum price range search - TestAssembly:SearchWorkflows/Feature:Huur+Tests/Scenario:City%2c+radius+and+minimum+price+range+search
+#8: City, radius and maximum price range search - TestAssembly:SearchWorkflows/Feature:Huur+Tests/Scenario:City%2c+radius+and+maximum+price+range+search
+#9: City, default radius and price range search - TestAssembly:SearchWorkflows/Feature:Huur+Tests/Scenario:City%2c+default+radius+and+price+range+search
+#10: City, default radius and minimum price range search - TestAssembly:SearchWorkflows/Feature:Huur+Tests/Scenario:City%2c+default+radius+and+minimum+price+range+search
+#11: City, default radius and maximum price range search - TestAssembly:SearchWorkflows/Feature:Huur+Tests/Scenario:City%2c+default+radius+and+maximum+price+range+search
+#13: City, default radius and default price search - TestAssembly:SearchWorkflows/Feature:koop+Tests/Scenario:City%2c+default+radius+and+default+price+search
+#14: City, radius and default price search - TestAssembly:SearchWorkflows/Feature:koop+Tests/Scenario:City%2c+radius+and+default+price+search
+#15: City, radius and price range search - TestAssembly:SearchWorkflows/Feature:koop+Tests/Scenario:City%2c+radius+and+price+range+search
+#16: City, radius and minimum price range search - TestAssembly:SearchWorkflows/Feature:koop+Tests/Scenario:City%2c+radius+and+minimum+price+range+search
+#17: City, radius and maximum price range search - TestAssembly:SearchWorkflows/Feature:koop+Tests/Scenario:City%2c+radius+and+maximum+price+range+search
+#18: City, default radius and price range search - TestAssembly:SearchWorkflows/Feature:koop+Tests/Scenario:City%2c+default+radius+and+price+range+search
+#19: City, default radius and minimum price range search - TestAssembly:SearchWorkflows/Feature:koop+Tests/Scenario:City%2c+default+radius+and+minimum+price+range+search
+#20: City, default radius and maximum price range search - TestAssembly:SearchWorkflows/Feature:koop+Tests/Scenario:City%2c+default+radius+and+maximum+price+range+search
+#22: City and default radius search - TestAssembly:SearchWorkflows/Feature:Nieuwbouw+Tests/Scenario:City+and+default+radius+search
+#23: City and radius search - TestAssembly:SearchWorkflows/Feature:Nieuwbouw+Tests/Scenario:City+and+radius+search
+#25: City and default radius search - TestAssembly:SearchWorkflows/Feature:Recreatie+Tests/Scenario:City+and+default+radius+search
+#26: City and radius search - TestAssembly:SearchWorkflows/Feature:Recreatie+Tests/Scenario:City+and+radius+search
+End: Test Suite Dump
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #4 from normal test queue 
+Thread#0:Scheduler: considering testitem #4 for thread
+Thread#0:Scheduler: using testitem #4 for thread
+Thread#0:Scheduler: Test #4 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread #0: creating new test thread executor for SearchWorkflows, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null (target: Default)
+Loading SpecRun type 'TechTalk.SpecRun.Framework.TestAssemblyExecutor' from: C:\Users\Mita\AppData\Local\Temp\VisualStudioTestExplorerExtensions\SpecRun.Runner.1.5.2\tools\TechTalk.SpecRun.Framework.Executor.dll
+Thread#0: Test #4/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.1s)
+Thread#0:B:Given funda website is opened on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (8.1s)
+Thread#0:B:When I fill in "Huur" search form "Amsterdam", "+ 0 km", "€ 0", "Geen maximum"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Huur", "Amsterdam", "+ 0 km", "€ 0", "Geen maximum") (0.6s)
+Thread#0:B:And I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (5.1s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "huur" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Amsterdam"
+Thread#0:T:skipped because of previous errors
+Thread#0:Scheduler: reschedule tests for testitem #0
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #5 from normal test queue 
+Thread#0:Scheduler: considering testitem #5 for thread
+Thread#0:Scheduler: using testitem #5 for thread
+Thread#0:Scheduler: Test #5 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #4/0 is finished on thread #0 as Failed within 23.4563047 seconds
+Thread#0: Test #5/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (4.1s)
+Thread#0:B:When I fill in "Huur" search form "Vught", "+ 5 km", "€ 0", "Geen maximum"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Huur", "Vught", "+ 5 km", "€ 0", "Geen maximum") (0.6s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (5.1s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "huur" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Vught, +5 km"
+Thread#0:T:skipped because of previous errors
+Thread#0:Scheduler: reschedule tests for testitem #0
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #6 from normal test queue 
+Thread#0:Scheduler: considering testitem #6 for thread
+Thread#0:Scheduler: using testitem #6 for thread
+Thread#0:Scheduler: Test #6 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #5/0 is finished on thread #0 as Failed within 15.7263302 seconds
+Thread#0: Test #6/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (3.8s)
+Thread#0:B:When I fill in "Huur" search form "Vught", "+ 5 km", "€ 100", "€ 6.000"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Huur", "Vught", "+ 5 km", "€ 100", "€ 6.000") (0.6s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (5.1s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "huur" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Vught, +5 km, € 100 - € 6.000"
+Thread#0:T:skipped because of previous errors
+Thread#0:Scheduler: reschedule tests for testitem #0
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #7 from normal test queue 
+Thread#0:Scheduler: considering testitem #7 for thread
+Thread#0:Scheduler: using testitem #7 for thread
+Thread#0:Scheduler: Test #7 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #6/0 is finished on thread #0 as Failed within 15.5098873 seconds
+Thread#0: Test #7/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (4.6s)
+Thread#0:B:When I fill in "Huur" search form "Amsterdam", "+ 2 km", "€ 100", "Geen maximum"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Huur", "Amsterdam", "+ 2 km", "€ 100", "Geen maximum") (0.7s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (7.3s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor("Amsterdam") (0.0s)
+Thread#0:B:When I go to funda homepage on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (3.9s)
+Thread#0:B:Then I see last search as "Amsterdam, +2 km, € 100+"
+Thread#0:T:done: KoopSteps.ThenISeeLastSearchAs("Amsterdam, +2 km,...") (0.1s)
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #8 from normal test queue 
+Thread#0:Scheduler: considering testitem #8 for thread
+Thread#0:Scheduler: using testitem #8 for thread
+Thread#0:Scheduler: Test #8 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #7/0 is finished on thread #0 as Succeeded within 22.2047435 seconds
+Thread#0: Test #8/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (4.2s)
+Thread#0:B:When I fill in "Huur" search form "Amsterdam", "+ 2 km", "€ 0", "€ 6.000"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Huur", "Amsterdam", "+ 2 km", "€ 0", "€ 6.000") (0.7s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (7.4s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor("Amsterdam") (0.0s)
+Thread#0:B:When I go to funda homepage on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (3.9s)
+Thread#0:B:Then I see last search as "Amsterdam, +2 km, € 0 - € 6.000"
+Thread#0:T:done: KoopSteps.ThenISeeLastSearchAs("Amsterdam, +2 km,...") (0.1s)
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #9 from normal test queue 
+Thread#0:Scheduler: considering testitem #9 for thread
+Thread#0:Scheduler: using testitem #9 for thread
+Thread#0:Scheduler: Test #9 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #8/0 is finished on thread #0 as Succeeded within 21.7282828 seconds
+Thread#0: Test #9/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (3.9s)
+Thread#0:B:When I fill in "Huur" search form "Amsterdam", "+ 0 km", "€ 2.000", "€ 6.000"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Huur", "Amsterdam", "+ 0 km", "€ 2.000", "€ 6.000") (0.7s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (7.0s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor("Amsterdam") (0.0s)
+Thread#0:B:When I go to funda homepage on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (3.9s)
+Thread#0:B:Then I see last search as "Amsterdam, € 2.000 - € 6.000"
+Thread#0:T:done: KoopSteps.ThenISeeLastSearchAs("Amsterdam, € 2.00...") (0.1s)
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #10 from normal test queue 
+Thread#0:Scheduler: considering testitem #10 for thread
+Thread#0:Scheduler: using testitem #10 for thread
+Thread#0:Scheduler: Test #10 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #9/0 is finished on thread #0 as Succeeded within 21.1884411 seconds
+Thread#0: Test #10/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (5.0s)
+Thread#0:B:When I fill in "Huur" search form "Vught", "+ 2 km", "€ 100", "Geen maximum"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Huur", "Vught", "+ 2 km", "€ 100", "Geen maximum") (0.7s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (8.5s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "huur" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Vught, +2 km, € 100+"
+Thread#0:T:skipped because of previous errors
+Thread#0:Scheduler: reschedule tests for testitem #0
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #11 from normal test queue 
+Thread#0:Scheduler: considering testitem #11 for thread
+Thread#0:Scheduler: using testitem #11 for thread
+Thread#0:Scheduler: Test #11 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #10/0 is finished on thread #0 as Failed within 20.0997192 seconds
+Thread#0: Test #11/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "huur" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("huur") (4.1s)
+Thread#0:B:When I fill in "Huur" search form "Amsterdam", "+ 2 km", "€ 0", "€ 2.000"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Huur", "Amsterdam", "+ 2 km", "€ 0", "€ 2.000") (0.7s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (5.1s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "huur" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Amsterdam, +2 km, € 0 - € 2.000"
+Thread#0:T:skipped because of previous errors
+Thread#0:Scheduler: reschedule tests for testitem #0
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #13 from normal test queue 
+Thread#0:Scheduler: considering testitem #13 for thread
+Thread#0:Scheduler: using testitem #13 for thread
+Thread#0:Scheduler: Test #13 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #11/0 is finished on thread #0 as Failed within 15.9067168 seconds
+Thread#0: Test #13/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.4s)
+Thread#0:B:When I fill in "Koop" search form "Amsterdam", "+ 0 km", "€ 0", "Geen maximum"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Koop", "Amsterdam", "+ 0 km", "€ 0", "Geen maximum") (0.7s)
+Thread#0:B:And I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (7.2s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor("Amsterdam") (0.0s)
+Thread#0:B:When I go to funda homepage on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.0s)
+Thread#0:B:Then I see last search as "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenISeeLastSearchAs("Amsterdam") (0.0s)
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #14 from normal test queue 
+Thread#0:Scheduler: considering testitem #14 for thread
+Thread#0:Scheduler: using testitem #14 for thread
+Thread#0:Scheduler: Test #14 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #13/0 is finished on thread #0 as Succeeded within 21.8881364 seconds
+Thread#0: Test #14/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.0s)
+Thread#0:B:When I fill in "Koop" search form "Vught", "+ 5 km", "€ 0", "Geen maximum"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Koop", "Vught", "+ 5 km", "€ 0", "Geen maximum") (0.6s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (7.0s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "koop" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Vught, +5 km"
+Thread#0:T:skipped because of previous errors
+Thread#0:Scheduler: reschedule tests for testitem #0
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #15 from normal test queue 
+Thread#0:Scheduler: considering testitem #15 for thread
+Thread#0:Scheduler: using testitem #15 for thread
+Thread#0:Scheduler: Test #15 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #14/0 is finished on thread #0 as Failed within 17.6565364 seconds
+Thread#0: Test #15/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.1s)
+Thread#0:B:When I fill in "Koop" search form "Vught", "+ 5 km", "€ 400.000", "€ 1.250.000"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Koop", "Vught", "+ 5 km", "€ 400.000", "€ 1.250.000") (0.8s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (5.1s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "koop" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Vught, +5 km, € 400.000 - € 1.250.000"
+Thread#0:T:skipped because of previous errors
+Thread#0:Scheduler: reschedule tests for testitem #0
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #16 from normal test queue 
+Thread#0:Scheduler: considering testitem #16 for thread
+Thread#0:Scheduler: using testitem #16 for thread
+Thread#0:Scheduler: Test #16 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #15/0 is finished on thread #0 as Failed within 16.0265486 seconds
+Thread#0: Test #16/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.1s)
+Thread#0:B:When I fill in "Koop" search form "Amsterdam", "+ 2 km", "€ 400.000", "Geen maximum"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Koop", "Amsterdam", "+ 2 km", "€ 400.000", "Geen maximum") (0.8s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (5.1s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "koop" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Amsterdam, +2 km, € 400.000+"
+Thread#0:T:skipped because of previous errors
+Thread#0:Scheduler: reschedule tests for testitem #0
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #17 from normal test queue 
+Thread#0:Scheduler: considering testitem #17 for thread
+Thread#0:Scheduler: using testitem #17 for thread
+Thread#0:Scheduler: Test #17 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #16/0 is finished on thread #0 as Failed within 15.8802442 seconds
+Thread#0: Test #17/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.1s)
+Thread#0:B:When I fill in "Koop" search form "Amsterdam", "+ 2 km", "€ 0", "€ 400.000"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Koop", "Amsterdam", "+ 2 km", "€ 0", "€ 400.000") (0.8s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (7.3s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor("Amsterdam") (0.0s)
+Thread#0:B:When I go to funda homepage on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.9s)
+Thread#0:B:Then I see last search as "Amsterdam, +2 km, € 0 - € 400.000"
+Thread#0:T:done: KoopSteps.ThenISeeLastSearchAs("Amsterdam, +2 km,...") (0.1s)
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #18 from normal test queue 
+Thread#0:Scheduler: considering testitem #18 for thread
+Thread#0:Scheduler: using testitem #18 for thread
+Thread#0:Scheduler: Test #18 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #17/0 is finished on thread #0 as Succeeded within 22.7241568 seconds
+Thread#0: Test #18/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (3.9s)
+Thread#0:B:When I fill in "Koop" search form "Amsterdam", "+ 0 km", "€ 400.000", "€ 1.250.000"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Koop", "Amsterdam", "+ 0 km", "€ 400.000", "€ 1.250.000") (0.8s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (7.1s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor("Amsterdam") (0.0s)
+Thread#0:B:When I go to funda homepage on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.1s)
+Thread#0:B:Then I see last search as "Amsterdam, € 400.000 - € 1.250.000"
+Thread#0:T:done: KoopSteps.ThenISeeLastSearchAs("Amsterdam, € 400....") (0.1s)
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #19 from normal test queue 
+Thread#0:Scheduler: considering testitem #19 for thread
+Thread#0:Scheduler: using testitem #19 for thread
+Thread#0:Scheduler: Test #19 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #18/0 is finished on thread #0 as Succeeded within 21.475275 seconds
+Thread#0: Test #19/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.0s)
+Thread#0:B:When I fill in "Koop" search form "Vught", "+ 2 km", "€ 400.000", "Geen maximum"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Koop", "Vught", "+ 2 km", "€ 400.000", "Geen maximum") (0.7s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (5.1s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "koop" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Vught, +2 km, € 400.000+"
+Thread#0:T:skipped because of previous errors
+Thread#0:Scheduler: reschedule tests for testitem #0
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #20 from normal test queue 
+Thread#0:Scheduler: considering testitem #20 for thread
+Thread#0:Scheduler: using testitem #20 for thread
+Thread#0:Scheduler: Test #20 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #19/0 is finished on thread #0 as Failed within 15.6156542 seconds
+Thread#0: Test #20/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.1s)
+Thread#0:B:When I fill in "Koop" search form "Amsterdam", "+ 2 km", "€ 0", "€ 400.000"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormInSearchForm("Koop", "Amsterdam", "+ 2 km", "€ 0", "€ 400.000") (0.8s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (7.2s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor("Amsterdam") (0.0s)
+Thread#0:B:When I go to funda homepage on "koop" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("koop") (4.1s)
+Thread#0:B:Then I see last search as "Amsterdam, +2 km, € 0 - € 400.000"
+Thread#0:T:done: KoopSteps.ThenISeeLastSearchAs("Amsterdam, +2 km,...") (0.0s)
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #22 from normal test queue 
+Thread#0:Scheduler: considering testitem #22 for thread
+Thread#0:Scheduler: using testitem #22 for thread
+Thread#0:Scheduler: Test #22 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #20/0 is finished on thread #0 as Succeeded within 21.7753999 seconds
+Thread#0: Test #22/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "nieuwbouw" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("nieuwbouw") (3.8s)
+Thread#0:B:When I fill in "Nieuwbouw" search form "Amsterdam" and "+ 0 km"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormAnd("Nieuwbouw", "Amsterdam", "+ 0 km") (0.4s)
+Thread#0:B:And I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (6.8s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor("Amsterdam") (0.0s)
+Thread#0:B:When I go to funda homepage on "nieuwbouw" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("nieuwbouw") (4.1s)
+Thread#0:B:Then I see last search as "Amsterdam"
+Thread#0:T:done: KoopSteps.ThenISeeLastSearchAs("Amsterdam") (0.0s)
+Thread#0:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #23 from normal test queue 
+Thread#0:Scheduler: considering testitem #23 for thread
+Thread#0:Scheduler: using testitem #23 for thread
+Thread#0:Scheduler: Test #23 is scheduled for thread
+Thread#0:Scheduler: with testItemExecutionIndex 0
+Thread#0: Test #22/0 is finished on thread #0 as Succeeded within 20.6451262 seconds
+Thread#0: Test #23/0 is started on thread #0
+Thread#0:B:Given browser local data is cleared
+Thread#0:T:done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)
+Thread#0:B:And there is internet connection
+Thread#0:T:done: KoopSteps.GivenThereIsInternetConnection() (0.0s)
+Thread#0:B:Given funda website is opened on "nieuwbouw" tab
+Thread#0:T:done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab("nieuwbouw") (4.2s)
+Thread#0:B:When I fill in "Nieuwbouw" search form "Vught" and "+ 5 km"
+Thread#0:T:done: KoopSteps.WhenIFillInSearchFormAnd("Nieuwbouw", "Vught", "+ 5 km") (0.3s)
+Thread#0:B:When I click Search
+Thread#0:T:done: KoopSteps.WhenIClickSearch() (6.5s)
+Thread#0:B:Then the page title will show the search result for "Amsterdam"
+Thread#0:T:error:   Search result is not displayed correctly.
+Thread#0:T:  Expected: True
+Thread#0:T:  But was:  False
+Thread#0:B:When I go to funda homepage on "nieuwbouw" tab
+Thread#0:T:skipped because of previous errors
+Thread#0:B:Then I see last search as "Vught, +5 km"
+Thread#0:T:skipped because of previous errors
+Cancelling because configured number of failures reached
+Thread#0: Test #23/0 is finished on thread #0 as Failed within 17.4884742 seconds
+Appdomain Disposed
+Thread#-1:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #25 from normal test queue 
+Thread#-1:Scheduler: considering testitem #25 for thread
+Thread#-1:Scheduler: using testitem #25 for thread
+Thread#-1:Scheduler: Test #25 is scheduled for thread
+Thread#-1: Test #25/0 is started on thread #-1
+Thread#-1: Test #25/0 is finished on thread #-1 as Skipped within 0 seconds
+Thread#-1:Scheduler: get next test for thread
+Thread#:Scheduler: testitem #26 from normal test queue 
+Thread#-1:Scheduler: considering testitem #26 for thread
+Thread#-1:Scheduler: using testitem #26 for thread
+Thread#-1:Scheduler: Test #26 is scheduled for thread
+Thread#-1: Test #26/0 is started on thread #-1
+Thread#-1: Test #26/0 is finished on thread #-1 as Skipped within 0 seconds
+Thread#-1:Scheduler: get next test for thread
+Thread#:Scheduler: at the end of normal test queue
+Thread#-1:Scheduler: enumerator for thread is at end
+Total: 20
+Succeeded: 8
+Ignored: 0
+Pending: 0
+Skipped: 2
+Failed: 10

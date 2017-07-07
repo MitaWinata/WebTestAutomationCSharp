@@ -1,0 +1,4145 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+		<title>SearchWorflows Test Execution Report</title>
+        <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+        <script type="text/javascript">
+            /**
+            * jQuery.fn.sortElements
+            * --------------
+            * #author James Padolsey (http://james.padolsey.com)
+            * #version 0.11
+            * #updated 18-MAR-2010
+            * #url https://raw.github.com/jamespadolsey/jQuery-Plugins/master/sortElements/jquery.sortElements.js
+            * --------------
+            * #param Function comparator:
+            *   Exactly the same behaviour as [1,2,3].sort(comparator)
+            *   
+            * #param Function getSortable
+            *   A function that should return the element that is
+            *   to be sorted. The comparator will run on the
+            *   current collection, but you may want the actual
+            *   resulting sort to occur on a parent or another
+            *   associated element.
+            *   
+            *   E.g. $('td').sortElements(comparator, function(){
+            *      return this.parentNode; 
+            *   })
+            *   
+            *   The <td>'s parent (<tr>) will be sorted instead
+            *   of the <td> itself.
+            */
+            jQuery.fn.sortElements = (function () {
+
+                var sort = [].sort;
+
+                return function (comparator, getSortable) {
+
+                    getSortable = getSortable || function () { return this; };
+
+                    var placements = this.map(function () {
+
+                        var sortElement = getSortable.call(this),
+                parentNode = sortElement.parentNode,
+
+                        // Since the element itself will change position, we have
+                        // to have some way of storing it's original position in
+                        // the DOM. The easiest way is to have a 'flag' node:
+                nextSibling = parentNode.insertBefore(
+                    document.createTextNode(''),
+                    sortElement.nextSibling
+                );
+
+                        return function () {
+
+                            if (parentNode === this) {
+                                throw new Error(
+                        "You can't sort elements if any one is a descendant of another."
+                    );
+                            }
+
+                            // Insert before flag:
+                            parentNode.insertBefore(this, nextSibling);
+                            // Remove flag:
+                            parentNode.removeChild(nextSibling);
+
+                        };
+
+                    });
+
+                    return sort.call(this, comparator).each(function (i) {
+                        placements[i].call(getSortable.call(this));
+                    });
+
+                };
+
+            })();
+        </script>
+        <script type="text/javascript">
+            jQuery.fn.setBarSizes = (function () {
+                return function (metricName, maxBarSize, min) {
+                    var max = Math.max.apply(Math, $.makeArray($(this).map(function () { return Number($(this).attr('data-sr-' + metricName)); })));
+                    var scale = 1.0;
+                    while (max > 0.0 && max <= 10.0) {
+                        scale = scale * 10.0;
+                        max = max * 10.0;
+                    }
+                    max = (Math.ceil(max / 2) * 2) / scale;
+
+                    this.each(function () {
+                        var barAnchor = $(this).find('a');
+                        var actual = $(this).attr('data-sr-' + metricName);
+                        var newHeight = Math.max(Math.round(maxBarSize * (actual - min) / (max - min)), 2);
+                        barAnchor.css({ height: newHeight });
+                    });
+
+                    var unit = "";
+                    if (metricName.substr(metricName.length - 4, 4) === "time")
+                        unit = "s";
+
+                    $('#testview .scale-min-label').each(function () {
+                        $(this).text(min.toString() + unit);
+                    });
+                    $('#testview .scale-max-label').each(function () {
+                        $(this).text(max.toString() + unit);
+                    });
+                    var mid = max / 2;
+                    $('#testview .scale-mid-label').each(function () {
+                        $(this).text(mid.toString() + unit);
+                    });
+                };
+            })();
+
+            function getComparer(metricName, isDesc) {
+                return function (a, b) {
+                    var aNumber = Number($(a).attr('data-sr-' + metricName));
+                    var bNumber = Number($(b).attr('data-sr-' + metricName));
+                    var result = aNumber > bNumber ? 1 : (aNumber < bNumber ? -1 : 0);
+                    if (isDesc)
+                        result = -1 * result;
+
+                    if (result == 0 && metricName != "order")
+                        result = getComparer("order", false)(a, b);
+
+                    return result;
+                };
+            }
+
+            var currentSort = "";
+            function doSort(allowToggleDesc) {
+                var newSort = $("input[name='barSortOrder']:checked").val();
+                if (allowToggleDesc && currentSort == newSort) {
+                    $('#barSortDesc').click();
+                    doSort(false);
+                    return;
+                }
+                currentSort = newSort;
+                $('#testview td.testview-item').sortElements(getComparer(newSort, $('#barSortDesc').is(':checked')));
+            }
+
+
+            function doSetHeights(allowSort) {
+                var selectedMetric = $("input[name='barHeight']:checked").val();
+                $('#testview td.testview-item').setBarSizes(selectedMetric, 60, 0.0);
+
+                if (allowSort && currentSort != selectedMetric) {
+                    var $radios = $("input[name='barSortOrder']");
+                    $radios.filter('[value=' + selectedMetric + ']').attr('checked', true);
+                    $("#barSortDesc").attr("checked", [true]);
+                    doSort(false);
+                }
+            }
+
+            $(document).ready(function () {
+                $("input[name='barSortOrder']").click(function () { doSort(true); return true; });
+                $("input[name='barSortDesc']").change(function () { doSort(false); });
+                $("input[name='barHeight']").change(function () { doSetHeights(true); });
+
+                doSort(false);
+                doSetHeights(false);
+
+                $("div.scrollable").css({ 'overflow': 'auto' });
+            });
+        </script>
+
+        <style type="text/css">
+            body 
+            {
+                color: #000000;
+                font-family: Arial,Liberation Sans,DejaVu Sans,sans-serif;
+                line-height: 130%;
+            }
+            h1 {
+                font-family: Trebuchet MS,Liberation Sans,DejaVu Sans,sans-serif;
+                font-size: 170%;
+                font-weight: bold;
+            }            
+            h2 {
+                font-family: Trebuchet MS,Liberation Sans,DejaVu Sans,sans-serif;
+                font-size: 130%;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }            
+            h3 {
+                font-family: Trebuchet MS,Liberation Sans,DejaVu Sans,sans-serif;
+                font-size: 120%;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }            
+            a.bar
+            {
+                text-decoration: none;
+                display: block;
+                line-height: 1px;
+            }
+            .description
+            {
+                font-style: italic;
+            }
+            .log 
+            {
+                width: 600px;
+                white-space: pre-wrap;
+                display: block;
+                margin: 0px;
+            }
+            .errorMessage 
+            {
+                width: 600px;
+                color: Red;
+                font-weight: bold;
+            }
+            .stackTrace 
+            {
+                width: 600px;
+                white-space: pre-wrap;
+                font-style: italic;
+                color: Red;
+                display: block;
+            }
+            table.testEvents
+            {
+                border: solid 1px #e8eef4;
+                border-collapse: collapse;
+            }
+            table.testEvents td
+            {
+                vertical-align: top;
+                padding: 5px;
+                border: solid 1px #e8eef4;
+            }
+            table.testEvents th
+            {
+                padding: 6px 5px;
+                text-align: left;
+                background-color: #e8eef4;
+                border: solid 1px #e8eef4;                
+            }
+            .comment
+            {
+                font-style: italic;
+                font-size: smaller;
+            }
+            .startupBar
+            {
+                background-color: #EEEEEE;
+                cursor: default;
+            }
+            
+            .colorSucceeded
+            {
+                background-color: #90ED7B;
+            }
+            .colorIgnored
+            {
+                background-color: #FFFF85;
+            }
+            .colorPending
+            {
+                background-color: #D47BED;
+            }
+            .colorNothingToRun
+            {
+                background-color: #CCCCFF;
+            }
+            .colorSkipped
+            {
+                background-color: #CCCCFF;
+            }
+            .colorInconclusive
+            {
+                background-color: #7BEDED;
+            }
+            .colorCleanupFailed
+            {
+                background-color: #FFCCCC;
+            }
+            .colorRandomlyFailed
+            {
+                background-color: #EDB07B;
+            }
+            .colorFailed
+            {
+                background-color: #ED5F5F;
+            }
+            .colorInitializationFailed
+            {
+                background-color: #FF0000;
+            }
+            .colorFrameworkError
+            {
+                background-color: #FF0000;
+            }
+            ul.subNodeLinks
+            {
+                padding-left: 20px;
+                margin: 0px;
+            }
+            ul.subNodeLinks li
+            {
+                list-style: none;
+            }
+            
+            /* views general */
+            div.scrollable
+            {
+                /*overflow: auto; - thsi has to be set from js, because of an IE9 bug */
+            }
+            div.viewbox
+            {
+                position: relative;
+                border: 3px solid #e8eef4;
+            }
+            div.viewbox table
+            {
+                border: 0px;
+            }
+                        
+            /* testview */
+            #testview
+            {
+                padding-top: 23px;
+            }
+            
+            table.testview-items td
+            {
+                vertical-align: bottom;
+                padding: 0px 1px 0px 1px;
+            }
+            td.right-padding, td.left-padding
+            {
+                width: 25px;
+                min-width: 25px;
+            }
+            table.testview-items a.bar
+            {
+                width: 5px;
+            }
+            table.testview-items tr.testview-items-row
+            {
+                height: 60px;
+            }
+            
+            /* scale */
+            table.vertical-scale 
+            {
+                position: absolute;
+                top: 23px;
+                left: 0px;
+                width: 100%;
+                z-index: -100;
+            }
+            table.vertical-scale td, tr.horizontal-scale td
+            {
+                font-size: 60%;
+                line-height: normal;
+            }
+            table.vertical-scale tr.scale-max, table.vertical-scale tr.scale-mid 
+            {
+                height: 30px;
+            }
+            tr.horizontal-scale, table.vertical-scale tr.scale-min 
+            {
+                height: 12px;
+            }
+            
+            td.scale-max-label, td.scale-mid-label, td.scale-min-label
+            {
+                border-top: solid 1px #E6E6E6;
+                text-align: left;
+                vertical-align: top;
+            }
+            td.scale-10-label
+            {
+                border-left: solid 1px #E6E6E6;
+                text-align: left;
+                vertical-align: bottom;
+                padding-left: 1px;
+            }
+            tr.scale-mid td, tr.scale-min td, tr.scale-max td
+            {
+                border-top: solid 1px #E6E6E6;
+            }
+           
+            
+            /* bar-control */
+            #bar-control
+            {
+                font-size: 60%;
+                line-height: normal;
+                position: absolute;
+                right: 0px;
+                top: 0px;
+            }
+            #bar-control label
+            {
+                font-weight: bold;
+                vertical-align: middle;
+            }
+            #bar-control .option
+            {
+                vertical-align: middle;
+                text-transform: lowercase;
+            }
+            #bar-control input[type="checkbox"]
+            {
+                padding: 0 2px 0 3px;
+            }
+            #bar-control input
+            {
+                vertical-align: top;
+                height: 12px;
+                margin: 0px;
+                padding: 0px;
+            }
+            #bar-control div
+            {
+                float: right;
+                margin: 3px 5px 3px 5px;
+            }
+            
+            
+            /* timeline view */
+            #timelineview
+            {
+                padding-top: 5px;
+            }
+            table.timelineview a
+            {
+                height: 20px;
+            }
+            table.timelineview td
+            {
+                vertical-align: bottom;
+                padding: 0px 1px 0px 0px;
+                border: 0px;
+            }
+            tr.thread-items-row
+            {
+                height: 25px;
+            }
+            tr.thread-items-row td
+            {
+                vertical-align: bottom;
+            }
+            td.thread-label
+            {
+                padding: 0px 6px 0px 6px;
+                text-align: right;
+                line-height: 18px;
+                vertical-align: bottom;
+            }
+            th.thread-label
+            {
+                padding: 3px 6px 0px 6px;
+                line-height: 18px;
+                text-align: left;
+                vertical-align: bottom;
+            }
+        </style>
+	</head>
+	<body>
+        <h1>SearchWorflows Test Execution Report</h1>
+        <ul>
+            <li>Project: SearchWorflows</li>
+            <li>Configuration: Default</li>
+            <li>Test Assemblies: C:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\bin\Debug\SearchWorkflows.dll</li>
+            <li>Start Time: 7/7/2017 1:08:53 PM</li>
+            <li>Duration: 00:05:47.6014257</li>
+            <li>Test Threads: 1</li>
+        </ul>
+
+        <h2>Result: 10 failed</h2>
+        <table class="testEvents">
+                <tr>
+        <th colspan="2">Success rate</th>
+        <th>Tests</th>
+        <th>Succeeded</th>
+        <th>Failed</th>
+        <th>Pending</th>
+        <th>Ignored</th>
+        <th>Skipped</th>
+    </tr>
+
+                <tr>
+            <td>
+            44%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 79px;" 
+                                title="8 succeeded" 
+                                                        />
+                    </td>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 99px;" 
+                                title="10 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+                    <td>
+                        <a class="bar colorSkipped" 
+                                style="width: 19px;" 
+                                title="2 skipped" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>20</td>
+    <td>8</td>
+    <td>10</td>
+    <td>0</td>
+    <td>0</td>
+    <td>2</td>
+
+    </tr>
+
+        </table>
+        
+        <h2>Test Timeline Summary</h2>
+
+        <div id="timelineview" class="viewbox">
+            <div class="scrollable">
+                <table cellpadding="0" cellspacing="0">
+                    <tr>
+                        <th class="thread-label" colspan="2">thread</th>
+                    </tr>
+                        <tr class="thread-items-row">
+                            <td class="thread-label" title="Machine: PRAMITA">#0</td>
+                            <td colspan="2">
+                                <table class="timelineview" cellpadding="0" cellspacing="0">
+                                    <tr>
+
+                                            <td>
+        <a
+            class="bar startupBar" 
+            style="width: 3px;" 
+                title="test thread startup" 
+        >&nbsp;</a>
+    </td>
+
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 4px;" 
+                title="City, default radius and default price search (in Huur Tests)" 
+                href="#t-1222989176.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 6px;" 
+                title="City, radius and default price search (in Huur Tests)" 
+                href="#t776724300.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 5px;" 
+                title="City, radius and price range search (in Huur Tests)" 
+                href="#t250903937.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorSucceeded" 
+            style="width: 8px;" 
+                title="City, radius and minimum price range search (in Huur Tests)" 
+                href="#t-779886743.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorSucceeded" 
+            style="width: 8px;" 
+                title="City, radius and maximum price range search (in Huur Tests)" 
+                href="#t-1633954029.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorSucceeded" 
+            style="width: 7px;" 
+                title="City, default radius and price range search (in Huur Tests)" 
+                href="#t166159329.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 7px;" 
+                title="City, default radius and minimum price range search (in Huur Tests)" 
+                href="#t654608713.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 6px;" 
+                title="City, default radius and maximum price range search (in Huur Tests)" 
+                href="#t-1351058707.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorSucceeded" 
+            style="width: 8px;" 
+                title="City, default radius and default price search (in koop Tests)" 
+                href="#t-1921396446.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 6px;" 
+                title="City, radius and default price search (in koop Tests)" 
+                href="#t338207974.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 5px;" 
+                title="City, radius and price range search (in koop Tests)" 
+                href="#t882312747.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 6px;" 
+                title="City, radius and minimum price range search (in koop Tests)" 
+                href="#t-337599293.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorSucceeded" 
+            style="width: 8px;" 
+                title="City, radius and maximum price range search (in koop Tests)" 
+                href="#t-1527206727.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorSucceeded" 
+            style="width: 8px;" 
+                title="City, default radius and price range search (in koop Tests)" 
+                href="#t864294987.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 5px;" 
+                title="City, default radius and minimum price range search (in koop Tests)" 
+                href="#t493351651.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorSucceeded" 
+            style="width: 8px;" 
+                title="City, default radius and maximum price range search (in koop Tests)" 
+                href="#t-1793392313.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorSucceeded" 
+            style="width: 7px;" 
+                title="City and default radius search (in Nieuwbouw Tests)" 
+                href="#t-1893756472.0"
+        >&nbsp;</a>
+    </td>
+    <td>
+        <a
+            class="bar colorFailed" 
+            style="width: 6px;" 
+                title="City and radius search (in Nieuwbouw Tests)" 
+                href="#t690201003.0"
+        >&nbsp;</a>
+    </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    <tr class="horizontal-scale">
+                        <td>&nbsp;</td>
+                            <td class="scale-10-label" style="width: 70px;min-width: 70px;">0s</td>
+                        <td class="scale-10-label">174s</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <h2>Test Result View</h2>
+        <div id="testview" class="viewbox">
+            <div id="bar-control">
+                <div id="bar-control-sort">
+                    <label>sort by:</label>
+                    <span class="option"><input type="radio" name="barSortOrder" value="exectime" />Time</span>
+                    <span class="option"><input type="radio" name="barSortOrder" value="acttime" />Act Time</span>
+                    <span class="option"><input type="radio" name="barSortOrder" value="order" />Execution</span>
+                    <span class="option"><input type="radio" name="barSortOrder" value="rescode" checked="checked" />Result</span>
+                    <span class="option"><input type="checkbox" name="barSortDesc" id="barSortDesc" checked="checked" />desc</span>
+                </div>
+                <div id="bar-control-heights">
+                    <label>heights:</label>
+                    <span class="option"><input type="radio" checked="checked" name="barHeight" value="exectime" />Time</span>
+                    <span class="option"><input type="radio" name="barHeight" value="acttime" />Act Time</span>
+                    
+                </div>
+            </div>
+            <table class="vertical-scale" cellpadding="0" cellspacing="0">
+                <tr class="scale-max">
+                    <td class="left-padding scale-max-label">&nbsp;</td>
+                    <td colspan="20">&nbsp;</td>
+                    <td class="right-padding">&nbsp;</td>
+                </tr>
+                <tr class="scale-mid">
+                    <td class="left-padding scale-mid-label">&nbsp;</td>
+                    <td colspan="20">&nbsp;</td>
+                    <td class="right-padding">&nbsp;</td>
+                </tr>
+                <tr class="scale-min">
+                    <td class="left-padding scale-min-label">&nbsp;</td>
+                    <td colspan="20">&nbsp;</td>
+                    <td class="right-padding">&nbsp;</td>
+                </tr>
+            </table>
+            <div class="scrollable">
+                <table class="testview-items" cellpadding="0" cellspacing="0">
+                    <tr class="testview-items-row">
+                        <td class="left-padding">&nbsp;</td>
+    <td class="testview-item" 
+        data-sr-exectime="22.2047435" data-sr-rescode="110" data-sr-order="3" data-sr-acttime="12.105">
+        <a
+            class="bar colorSucceeded" 
+            style="height: 57px;"
+            title="City, radius and minimum price range search (in Huur Tests)"
+            href="#t-779886743.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="21.7282828" data-sr-rescode="110" data-sr-order="4" data-sr-acttime="12.086">
+        <a
+            class="bar colorSucceeded" 
+            style="height: 56px;"
+            title="City, radius and maximum price range search (in Huur Tests)"
+            href="#t-1633954029.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="21.1884411" data-sr-rescode="110" data-sr-order="5" data-sr-acttime="11.82">
+        <a
+            class="bar colorSucceeded" 
+            style="height: 54px;"
+            title="City, default radius and price range search (in Huur Tests)"
+            href="#t166159329.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="21.8881364" data-sr-rescode="110" data-sr-order="8" data-sr-acttime="12.033">
+        <a
+            class="bar colorSucceeded" 
+            style="height: 56px;"
+            title="City, default radius and default price search (in koop Tests)"
+            href="#t-1921396446.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="22.7241568" data-sr-rescode="110" data-sr-order="12" data-sr-acttime="13.173">
+        <a
+            class="bar colorSucceeded" 
+            style="height: 58px;"
+            title="City, radius and maximum price range search (in koop Tests)"
+            href="#t-1527206727.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="21.475275" data-sr-rescode="110" data-sr-order="13" data-sr-acttime="12.152">
+        <a
+            class="bar colorSucceeded" 
+            style="height: 55px;"
+            title="City, default radius and price range search (in koop Tests)"
+            href="#t864294987.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="21.7753999" data-sr-rescode="110" data-sr-order="15" data-sr-acttime="12.191">
+        <a
+            class="bar colorSucceeded" 
+            style="height: 56px;"
+            title="City, default radius and maximum price range search (in koop Tests)"
+            href="#t-1793392313.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="20.6451262" data-sr-rescode="110" data-sr-order="16" data-sr-acttime="11.388">
+        <a
+            class="bar colorSucceeded" 
+            style="height: 53px;"
+            title="City and default radius search (in Nieuwbouw Tests)"
+            href="#t-1893756472.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="0" data-sr-rescode="320" data-sr-order="18" data-sr-acttime="0.0">
+        <a
+            class="bar colorSkipped" 
+            style="height: 2px;"
+            title="City and default radius search (in Recreatie Tests)"
+            href="#t823454587.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="0" data-sr-rescode="320" data-sr-order="19" data-sr-acttime="0.0">
+        <a
+            class="bar colorSkipped" 
+            style="height: 2px;"
+            title="City and radius search (in Recreatie Tests)"
+            href="#t-1758930152.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="23.4563047" data-sr-rescode="440" data-sr-order="0" data-sr-acttime="5.896">
+        <a
+            class="bar colorFailed" 
+            style="height: 60px;"
+            title="City, default radius and default price search (in Huur Tests)"
+            href="#t-1222989176.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="15.7263302" data-sr-rescode="440" data-sr-order="1" data-sr-acttime="5.874">
+        <a
+            class="bar colorFailed" 
+            style="height: 40px;"
+            title="City, radius and default price search (in Huur Tests)"
+            href="#t776724300.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="15.5098873" data-sr-rescode="440" data-sr-order="2" data-sr-acttime="5.922">
+        <a
+            class="bar colorFailed" 
+            style="height: 40px;"
+            title="City, radius and price range search (in Huur Tests)"
+            href="#t250903937.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="20.0997192" data-sr-rescode="440" data-sr-order="6" data-sr-acttime="9.378">
+        <a
+            class="bar colorFailed" 
+            style="height: 51px;"
+            title="City, default radius and minimum price range search (in Huur Tests)"
+            href="#t654608713.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="15.9067168" data-sr-rescode="440" data-sr-order="7" data-sr-acttime="6.061">
+        <a
+            class="bar colorFailed" 
+            style="height: 41px;"
+            title="City, default radius and maximum price range search (in Huur Tests)"
+            href="#t-1351058707.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="17.6565364" data-sr-rescode="440" data-sr-order="9" data-sr-acttime="7.764">
+        <a
+            class="bar colorFailed" 
+            style="height: 45px;"
+            title="City, radius and default price search (in koop Tests)"
+            href="#t338207974.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="16.0265486" data-sr-rescode="440" data-sr-order="10" data-sr-acttime="6.112">
+        <a
+            class="bar colorFailed" 
+            style="height: 41px;"
+            title="City, radius and price range search (in koop Tests)"
+            href="#t882312747.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="15.8802442" data-sr-rescode="440" data-sr-order="11" data-sr-acttime="6.065">
+        <a
+            class="bar colorFailed" 
+            style="height: 41px;"
+            title="City, radius and minimum price range search (in koop Tests)"
+            href="#t-337599293.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="15.6156542" data-sr-rescode="440" data-sr-order="14" data-sr-acttime="5.976">
+        <a
+            class="bar colorFailed" 
+            style="height: 40px;"
+            title="City, default radius and minimum price range search (in koop Tests)"
+            href="#t493351651.0">&nbsp;</a>
+    </td>
+    <td class="testview-item" 
+        data-sr-exectime="17.4884742" data-sr-rescode="440" data-sr-order="17" data-sr-acttime="7.052">
+        <a
+            class="bar colorFailed" 
+            style="height: 45px;"
+            title="City and radius search (in Nieuwbouw Tests)"
+            href="#t690201003.0">&nbsp;</a>
+    </td>
+                        <td class="right-padding">&nbsp;</td>
+                    </tr>
+                    <tr class="horizontal-scale">
+                        <td class="left-padding">&nbsp;</td>
+                        <td colspan="10">&nbsp;</td>
+                            <td class="scale-10-label" colspan="10">10</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <h2>Feature Summary</h2>
+        <table class="testEvents">
+                <tr>
+            <th>Feature</th>
+        <th colspan="2">Success rate</th>
+        <th>Tests</th>
+        <th>Succeeded</th>
+        <th>Failed</th>
+        <th>Pending</th>
+        <th>Ignored</th>
+        <th>Skipped</th>
+    </tr>
+
+    <tr>
+            <td><a href="#f-1859571176">Huur Tests</a></td>
+            <td>
+            38%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 74px;" 
+                                title="3 succeeded" 
+                                                        />
+                    </td>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 124px;" 
+                                title="5 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>8</td>
+    <td>3</td>
+    <td>5</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+    </tr>
+    <tr>
+            <td><a href="#f-1421194830">koop Tests</a></td>
+            <td>
+            50%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 99px;" 
+                                title="4 succeeded" 
+                                                        />
+                    </td>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 99px;" 
+                                title="4 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>8</td>
+    <td>4</td>
+    <td>4</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+    </tr>
+    <tr>
+            <td><a href="#f1695182155">Nieuwbouw Tests</a></td>
+            <td>
+            50%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 99px;" 
+                                title="1 succeeded" 
+                                                        />
+                    </td>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 99px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>2</td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+    </tr>
+    <tr>
+            <td><a href="#f-620685320">Recreatie Tests</a></td>
+            <td>
+            n/a
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSkipped" 
+                                style="width: 199px;" 
+                                title="2 skipped" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>2</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>2</td>
+
+    </tr>
+        </table>
+
+        <a name="error_summary" />
+        <h2>Error Summary</h2>
+        <table class="testEvents">
+                <tr>
+            <th>Test</th>
+        <th colspan="2">Success rate</th>
+        <th>Tests</th>
+        <th>Succeeded</th>
+        <th>Failed</th>
+        <th>Pending</th>
+        <th>Ignored</th>
+        <th>Skipped</th>
+    </tr>
+
+                <tr>
+                    <td>
+                        <a href="#t-1222989176.0">City, default radius and default price search (in SearchWorkflows, Huur Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#t776724300.0">City, radius and default price search (in SearchWorkflows, Huur Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#t250903937.0">City, radius and price range search (in SearchWorkflows, Huur Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#t654608713.0">City, default radius and minimum price range search (in SearchWorkflows, Huur Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#t-1351058707.0">City, default radius and maximum price range search (in SearchWorkflows, Huur Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#t338207974.0">City, radius and default price search (in SearchWorkflows, koop Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#t882312747.0">City, radius and price range search (in SearchWorkflows, koop Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#t-337599293.0">City, radius and minimum price range search (in SearchWorkflows, koop Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#t493351651.0">City, default radius and minimum price range search (in SearchWorkflows, koop Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#t690201003.0">City and radius search (in SearchWorkflows, Nieuwbouw Tests)</a>
+                    </td>
+                        <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding-left: 20px;"><div class="errorMessage">Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div></td>
+                </tr>
+        </table>
+
+        <h2>Scenario Summary</h2>
+            <a name="f-1859571176" />
+            <h3>Feature: Huur Tests</h3>
+            <table class="testEvents">
+                    <tr>
+            <th>Test</th>
+        <th colspan="2">Success rate</th>
+        <th>Tests</th>
+        <th>Succeeded</th>
+        <th>Failed</th>
+        <th>Pending</th>
+        <th>Ignored</th>
+        <th>Skipped</th>
+    </tr>
+
+                    <tr>
+                        <td>
+                                    <a href="#t-1222989176.0">Scenario: City, default radius and default price search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t776724300.0">Scenario: City, radius and default price search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t250903937.0">Scenario: City, radius and price range search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t-779886743.0">Scenario: City, radius and minimum price range search</a>
+
+                        </td>
+                            <td>
+            100%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 199px;" 
+                                title="1 succeeded" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t-1633954029.0">Scenario: City, radius and maximum price range search</a>
+
+                        </td>
+                            <td>
+            100%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 199px;" 
+                                title="1 succeeded" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t166159329.0">Scenario: City, default radius and price range search</a>
+
+                        </td>
+                            <td>
+            100%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 199px;" 
+                                title="1 succeeded" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t654608713.0">Scenario: City, default radius and minimum price range search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t-1351058707.0">Scenario: City, default radius and maximum price range search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+            </table>
+            <a name="f-1421194830" />
+            <h3>Feature: koop Tests</h3>
+            <table class="testEvents">
+                    <tr>
+            <th>Test</th>
+        <th colspan="2">Success rate</th>
+        <th>Tests</th>
+        <th>Succeeded</th>
+        <th>Failed</th>
+        <th>Pending</th>
+        <th>Ignored</th>
+        <th>Skipped</th>
+    </tr>
+
+                    <tr>
+                        <td>
+                                    <a href="#t-1921396446.0">Scenario: City, default radius and default price search</a>
+
+                        </td>
+                            <td>
+            100%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 199px;" 
+                                title="1 succeeded" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t338207974.0">Scenario: City, radius and default price search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t882312747.0">Scenario: City, radius and price range search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t-337599293.0">Scenario: City, radius and minimum price range search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t-1527206727.0">Scenario: City, radius and maximum price range search</a>
+
+                        </td>
+                            <td>
+            100%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 199px;" 
+                                title="1 succeeded" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t864294987.0">Scenario: City, default radius and price range search</a>
+
+                        </td>
+                            <td>
+            100%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 199px;" 
+                                title="1 succeeded" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t493351651.0">Scenario: City, default radius and minimum price range search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t-1793392313.0">Scenario: City, default radius and maximum price range search</a>
+
+                        </td>
+                            <td>
+            100%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 199px;" 
+                                title="1 succeeded" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+            </table>
+            <a name="f1695182155" />
+            <h3>Feature: Nieuwbouw Tests</h3>
+            <table class="testEvents">
+                    <tr>
+            <th>Test</th>
+        <th colspan="2">Success rate</th>
+        <th>Tests</th>
+        <th>Succeeded</th>
+        <th>Failed</th>
+        <th>Pending</th>
+        <th>Ignored</th>
+        <th>Skipped</th>
+    </tr>
+
+                    <tr>
+                        <td>
+                                    <a href="#t-1893756472.0">Scenario: City and default radius search</a>
+
+                        </td>
+                            <td>
+            100%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSucceeded" 
+                                style="width: 199px;" 
+                                title="1 succeeded" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t690201003.0">Scenario: City and radius search</a>
+
+                        </td>
+                            <td>
+            0%
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorFailed" 
+                                style="width: 199px;" 
+                                title="1 failed" 
+                                                    href="#error_summary"
+                                />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+
+                    </tr>
+            </table>
+            <a name="f-620685320" />
+            <h3>Feature: Recreatie Tests</h3>
+            <table class="testEvents">
+                    <tr>
+            <th>Test</th>
+        <th colspan="2">Success rate</th>
+        <th>Tests</th>
+        <th>Succeeded</th>
+        <th>Failed</th>
+        <th>Pending</th>
+        <th>Ignored</th>
+        <th>Skipped</th>
+    </tr>
+
+                    <tr>
+                        <td>
+                                    <a href="#t823454587.0">Scenario: City and default radius search</a>
+
+                        </td>
+                            <td>
+            n/a
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSkipped" 
+                                style="width: 199px;" 
+                                title="1 skipped" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>1</td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                                    <a href="#t-1758930152.0">Scenario: City and radius search</a>
+
+                        </td>
+                            <td>
+            n/a
+    </td>
+    <td>
+        <table class="timelineview" cellpadding="0" cellspacing="0">
+            <tr>
+                    <td>
+                        <a class="bar colorSkipped" 
+                                style="width: 199px;" 
+                                title="1 skipped" 
+                                                        />
+                    </td>
+            </tr>
+        </table>
+    </td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+    <td>1</td>
+
+                    </tr>
+            </table>
+
+        <h2>Execution Details</h2>
+            <a name="t-1222989176.0" />
+            <h3>Scenario: City, default radius and default price search (in SearchWorkflows, Huur Tests)</h3>
+                <div class="description">
+                    tags: huurFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:08:53 PM</li>
+                <li>Execution time (sec): 23.4563047</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.084s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.1s)</pre>
+                        </td>
+                        <td>Succeeded in 0.092s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (8.1s)</pre>
+                        </td>
+                        <td>Succeeded in 8.207s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Huur&quot; search form &quot;Amsterdam&quot;, &quot;+ 0 km&quot;, &quot;€ 0&quot;, &quot;Geen maximum&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Huur&quot;, &quot;Amsterdam&quot;, &quot;+ 0 km&quot;, &quot;€ 0&quot;, &quot;Geen maximum&quot;) (0.6s)</pre>
+                        </td>
+                        <td>Succeeded in 0.66s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (5.1s)</pre>
+                        </td>
+                        <td>Succeeded in 5.186s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and default price search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.HuurTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature.cs:line 0
+   at SearchWorkflows.HuurTestsFeature.CityDefaultRadiusAndDefaultPriceSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature:line 14
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.122s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and default price search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.051s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and default price search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.083s</td>
+                    </tr>
+            </table>
+            <a name="t776724300.0" />
+            <h3>Scenario: City, radius and default price search (in SearchWorkflows, Huur Tests)</h3>
+                <div class="description">
+                    tags: huurFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:09:16 PM</li>
+                <li>Execution time (sec): 15.7263302</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.074s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.078s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (4.1s)</pre>
+                        </td>
+                        <td>Succeeded in 4.185s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Huur&quot; search form &quot;Vught&quot;, &quot;+ 5 km&quot;, &quot;€ 0&quot;, &quot;Geen maximum&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Huur&quot;, &quot;Vught&quot;, &quot;+ 5 km&quot;, &quot;€ 0&quot;, &quot;Geen maximum&quot;) (0.6s)</pre>
+                        </td>
+                        <td>Succeeded in 0.673s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (5.1s)</pre>
+                        </td>
+                        <td>Succeeded in 5.147s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and default price search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.HuurTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature.cs:line 0
+   at SearchWorkflows.HuurTestsFeature.CityRadiusAndDefaultPriceSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature:line 23
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.102s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and default price search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.053s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Vught, +5 km&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and default price search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.049s</td>
+                    </tr>
+            </table>
+            <a name="t250903937.0" />
+            <h3>Scenario: City, radius and price range search (in SearchWorkflows, Huur Tests)</h3>
+                <div class="description">
+                    tags: huurFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:09:32 PM</li>
+                <li>Execution time (sec): 15.5098873</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.059s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.089s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (3.8s)</pre>
+                        </td>
+                        <td>Succeeded in 3.885s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Huur&quot; search form &quot;Vught&quot;, &quot;+ 5 km&quot;, &quot;€ 100&quot;, &quot;€ 6.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Huur&quot;, &quot;Vught&quot;, &quot;+ 5 km&quot;, &quot;€ 100&quot;, &quot;€ 6.000&quot;) (0.6s)</pre>
+                        </td>
+                        <td>Succeeded in 0.695s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (5.1s)</pre>
+                        </td>
+                        <td>Succeeded in 5.168s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and price range search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.HuurTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature.cs:line 0
+   at SearchWorkflows.HuurTestsFeature.CityRadiusAndPriceRangeSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature:line 32
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.103s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.059s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Vught, +5 km, € 100 - € 6.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.049s</td>
+                    </tr>
+            </table>
+            <a name="t-779886743.0" />
+            <h3>Scenario: City, radius and minimum price range search (in SearchWorkflows, Huur Tests)</h3>
+                <div class="description">
+                    tags: huurFlows
+                </div>
+            <ul>
+                <li>Status: Succeeded</li>
+                <li>Start time: 7/7/2017 1:09:48 PM</li>
+                <li>Execution time (sec): 22.2047435</li>
+                <li>Thread: #0</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.076s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.081s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (4.6s)</pre>
+                        </td>
+                        <td>Succeeded in 4.673s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Huur&quot; search form &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 100&quot;, &quot;Geen maximum&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Huur&quot;, &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 100&quot;, &quot;Geen maximum&quot;) (0.7s)</pre>
+                        </td>
+                        <td>Succeeded in 0.786s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (7.3s)</pre>
+                        </td>
+                        <td>Succeeded in 7.346s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.056s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (3.9s)</pre>
+                        </td>
+                        <td>Succeeded in 3.974s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam, +2 km, € 100+&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.ThenISeeLastSearchAs(&quot;Amsterdam, +2 km,...&quot;) (0.1s)</pre>
+                        </td>
+                        <td>Succeeded in 0.135s</td>
+                    </tr>
+            </table>
+            <a name="t-1633954029.0" />
+            <h3>Scenario: City, radius and maximum price range search (in SearchWorkflows, Huur Tests)</h3>
+                <div class="description">
+                    tags: huurFlows
+                </div>
+            <ul>
+                <li>Status: Succeeded</li>
+                <li>Start time: 7/7/2017 1:10:10 PM</li>
+                <li>Execution time (sec): 21.7282828</li>
+                <li>Thread: #0</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.061s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.103s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (4.2s)</pre>
+                        </td>
+                        <td>Succeeded in 4.223s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Huur&quot; search form &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 0&quot;, &quot;€ 6.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Huur&quot;, &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 0&quot;, &quot;€ 6.000&quot;) (0.7s)</pre>
+                        </td>
+                        <td>Succeeded in 0.761s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (7.4s)</pre>
+                        </td>
+                        <td>Succeeded in 7.411s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.055s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (3.9s)</pre>
+                        </td>
+                        <td>Succeeded in 3.915s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam, +2 km, € 0 - € 6.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.ThenISeeLastSearchAs(&quot;Amsterdam, +2 km,...&quot;) (0.1s)</pre>
+                        </td>
+                        <td>Succeeded in 0.101s</td>
+                    </tr>
+            </table>
+            <a name="t166159329.0" />
+            <h3>Scenario: City, default radius and price range search (in SearchWorkflows, Huur Tests)</h3>
+                <div class="description">
+                    tags: huurFlows
+                </div>
+            <ul>
+                <li>Status: Succeeded</li>
+                <li>Start time: 7/7/2017 1:10:32 PM</li>
+                <li>Execution time (sec): 21.1884411</li>
+                <li>Thread: #0</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.081s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.076s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (3.9s)</pre>
+                        </td>
+                        <td>Succeeded in 3.938s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Huur&quot; search form &quot;Amsterdam&quot;, &quot;+ 0 km&quot;, &quot;€ 2.000&quot;, &quot;€ 6.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Huur&quot;, &quot;Amsterdam&quot;, &quot;+ 0 km&quot;, &quot;€ 2.000&quot;, &quot;€ 6.000&quot;) (0.7s)</pre>
+                        </td>
+                        <td>Succeeded in 0.805s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (7.0s)</pre>
+                        </td>
+                        <td>Succeeded in 7.112s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.058s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (3.9s)</pre>
+                        </td>
+                        <td>Succeeded in 3.904s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam, € 2.000 - € 6.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.ThenISeeLastSearchAs(&quot;Amsterdam, € 2.00...&quot;) (0.1s)</pre>
+                        </td>
+                        <td>Succeeded in 0.117s</td>
+                    </tr>
+            </table>
+            <a name="t654608713.0" />
+            <h3>Scenario: City, default radius and minimum price range search (in SearchWorkflows, Huur Tests)</h3>
+                <div class="description">
+                    tags: huurFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:10:53 PM</li>
+                <li>Execution time (sec): 20.0997192</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.056s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.079s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.051s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Huur&quot; search form &quot;Vught&quot;, &quot;+ 2 km&quot;, &quot;€ 100&quot;, &quot;Geen maximum&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Huur&quot;, &quot;Vught&quot;, &quot;+ 2 km&quot;, &quot;€ 100&quot;, &quot;Geen maximum&quot;) (0.7s)</pre>
+                        </td>
+                        <td>Succeeded in 0.742s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (8.5s)</pre>
+                        </td>
+                        <td>Succeeded in 8.574s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.HuurTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature.cs:line 0
+   at SearchWorkflows.HuurTestsFeature.CityDefaultRadiusAndMinimumPriceRangeSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature:line 68
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.109s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.063s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Vught, +2 km, € 100+&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.053s</td>
+                    </tr>
+            </table>
+            <a name="t-1351058707.0" />
+            <h3>Scenario: City, default radius and maximum price range search (in SearchWorkflows, Huur Tests)</h3>
+                <div class="description">
+                    tags: huurFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:11:13 PM</li>
+                <li>Execution time (sec): 15.9067168</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.069s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.082s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;huur&quot;) (4.1s)</pre>
+                        </td>
+                        <td>Succeeded in 4.18s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Huur&quot; search form &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 0&quot;, &quot;€ 2.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Huur&quot;, &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 0&quot;, &quot;€ 2.000&quot;) (0.7s)</pre>
+                        </td>
+                        <td>Succeeded in 0.768s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (5.1s)</pre>
+                        </td>
+                        <td>Succeeded in 5.236s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.HuurTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature.cs:line 0
+   at SearchWorkflows.HuurTestsFeature.CityDefaultRadiusAndMaximumPriceRangeSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\HuurTests.feature:line 77
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.099s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;huur&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.057s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam, +2 km, € 0 - € 2.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.045s</td>
+                    </tr>
+            </table>
+            <a name="t-1921396446.0" />
+            <h3>Scenario: City, default radius and default price search (in SearchWorkflows, koop Tests)</h3>
+                <div class="description">
+                    tags: koopFlows
+                </div>
+            <ul>
+                <li>Status: Succeeded</li>
+                <li>Start time: 7/7/2017 1:11:29 PM</li>
+                <li>Execution time (sec): 21.8881364</li>
+                <li>Thread: #0</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.072s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.081s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.4s)</pre>
+                        </td>
+                        <td>Succeeded in 4.47s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Koop&quot; search form &quot;Amsterdam&quot;, &quot;+ 0 km&quot;, &quot;€ 0&quot;, &quot;Geen maximum&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Koop&quot;, &quot;Amsterdam&quot;, &quot;+ 0 km&quot;, &quot;€ 0&quot;, &quot;Geen maximum&quot;) (0.7s)</pre>
+                        </td>
+                        <td>Succeeded in 0.733s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (7.2s)</pre>
+                        </td>
+                        <td>Succeeded in 7.229s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.059s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.0s)</pre>
+                        </td>
+                        <td>Succeeded in 4.072s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and default price search] -->
+                            <pre class="log">done: KoopSteps.ThenISeeLastSearchAs(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.093s</td>
+                    </tr>
+            </table>
+            <a name="t338207974.0" />
+            <h3>Scenario: City, radius and default price search (in SearchWorkflows, koop Tests)</h3>
+                <div class="description">
+                    tags: koopFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:11:51 PM</li>
+                <li>Execution time (sec): 17.6565364</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.059s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.092s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.0s)</pre>
+                        </td>
+                        <td>Succeeded in 4.113s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Koop&quot; search form &quot;Vught&quot;, &quot;+ 5 km&quot;, &quot;€ 0&quot;, &quot;Geen maximum&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Koop&quot;, &quot;Vught&quot;, &quot;+ 5 km&quot;, &quot;€ 0&quot;, &quot;Geen maximum&quot;) (0.6s)</pre>
+                        </td>
+                        <td>Succeeded in 0.681s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and default price search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (7.0s)</pre>
+                        </td>
+                        <td>Succeeded in 7.024s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and default price search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.KoopTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\KoopTests.feature.cs:line 0
+   at SearchWorkflows.KoopTestsFeature.CityRadiusAndDefaultPriceSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\KoopTests.feature:line 23
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.112s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and default price search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.058s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Vught, +5 km&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and default price search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.056s</td>
+                    </tr>
+            </table>
+            <a name="t882312747.0" />
+            <h3>Scenario: City, radius and price range search (in SearchWorkflows, koop Tests)</h3>
+                <div class="description">
+                    tags: koopFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:12:09 PM</li>
+                <li>Execution time (sec): 16.0265486</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.063s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.082s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.1s)</pre>
+                        </td>
+                        <td>Succeeded in 4.196s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Koop&quot; search form &quot;Vught&quot;, &quot;+ 5 km&quot;, &quot;€ 400.000&quot;, &quot;€ 1.250.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Koop&quot;, &quot;Vught&quot;, &quot;+ 5 km&quot;, &quot;€ 400.000&quot;, &quot;€ 1.250.000&quot;) (0.8s)</pre>
+                        </td>
+                        <td>Succeeded in 0.847s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (5.1s)</pre>
+                        </td>
+                        <td>Succeeded in 5.207s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and price range search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.KoopTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\KoopTests.feature.cs:line 0
+   at SearchWorkflows.KoopTestsFeature.CityRadiusAndPriceRangeSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\KoopTests.feature:line 32
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.119s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.059s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Vught, +5 km, € 400.000 - € 1.250.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.055s</td>
+                    </tr>
+            </table>
+            <a name="t-337599293.0" />
+            <h3>Scenario: City, radius and minimum price range search (in SearchWorkflows, koop Tests)</h3>
+                <div class="description">
+                    tags: koopFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:12:25 PM</li>
+                <li>Execution time (sec): 15.8802442</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.057s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.081s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.1s)</pre>
+                        </td>
+                        <td>Succeeded in 4.15s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Koop&quot; search form &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 400.000&quot;, &quot;Geen maximum&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Koop&quot;, &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 400.000&quot;, &quot;Geen maximum&quot;) (0.8s)</pre>
+                        </td>
+                        <td>Succeeded in 0.876s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (5.1s)</pre>
+                        </td>
+                        <td>Succeeded in 5.142s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.KoopTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\KoopTests.feature.cs:line 0
+   at SearchWorkflows.KoopTestsFeature.CityRadiusAndMinimumPriceRangeSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\KoopTests.feature:line 41
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.104s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.047s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam, +2 km, € 400.000+&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and minimum price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.05s</td>
+                    </tr>
+            </table>
+            <a name="t-1527206727.0" />
+            <h3>Scenario: City, radius and maximum price range search (in SearchWorkflows, koop Tests)</h3>
+                <div class="description">
+                    tags: koopFlows
+                </div>
+            <ul>
+                <li>Status: Succeeded</li>
+                <li>Start time: 7/7/2017 1:12:41 PM</li>
+                <li>Execution time (sec): 22.7241568</li>
+                <li>Thread: #0</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.064s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.071s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.1s)</pre>
+                        </td>
+                        <td>Succeeded in 4.175s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Koop&quot; search form &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 0&quot;, &quot;€ 400.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Koop&quot;, &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 0&quot;, &quot;€ 400.000&quot;) (0.8s)</pre>
+                        </td>
+                        <td>Succeeded in 0.842s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (7.3s)</pre>
+                        </td>
+                        <td>Succeeded in 7.366s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.061s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.9s)</pre>
+                        </td>
+                        <td>Succeeded in 4.966s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam, +2 km, € 0 - € 400.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.ThenISeeLastSearchAs(&quot;Amsterdam, +2 km,...&quot;) (0.1s)</pre>
+                        </td>
+                        <td>Succeeded in 0.102s</td>
+                    </tr>
+            </table>
+            <a name="t864294987.0" />
+            <h3>Scenario: City, default radius and price range search (in SearchWorkflows, koop Tests)</h3>
+                <div class="description">
+                    tags: koopFlows
+                </div>
+            <ul>
+                <li>Status: Succeeded</li>
+                <li>Start time: 7/7/2017 1:13:03 PM</li>
+                <li>Execution time (sec): 21.475275</li>
+                <li>Thread: #0</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.061s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.081s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (3.9s)</pre>
+                        </td>
+                        <td>Succeeded in 3.927s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Koop&quot; search form &quot;Amsterdam&quot;, &quot;+ 0 km&quot;, &quot;€ 400.000&quot;, &quot;€ 1.250.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Koop&quot;, &quot;Amsterdam&quot;, &quot;+ 0 km&quot;, &quot;€ 400.000&quot;, &quot;€ 1.250.000&quot;) (0.8s)</pre>
+                        </td>
+                        <td>Succeeded in 0.855s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (7.1s)</pre>
+                        </td>
+                        <td>Succeeded in 7.155s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.063s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.1s)</pre>
+                        </td>
+                        <td>Succeeded in 4.142s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam, € 400.000 - € 1.250.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and price range search] -->
+                            <pre class="log">done: KoopSteps.ThenISeeLastSearchAs(&quot;Amsterdam, € 400....&quot;) (0.1s)</pre>
+                        </td>
+                        <td>Succeeded in 0.103s</td>
+                    </tr>
+            </table>
+            <a name="t493351651.0" />
+            <h3>Scenario: City, default radius and minimum price range search (in SearchWorkflows, koop Tests)</h3>
+                <div class="description">
+                    tags: koopFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:13:25 PM</li>
+                <li>Execution time (sec): 15.6156542</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.058s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.072s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.0s)</pre>
+                        </td>
+                        <td>Succeeded in 4s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Koop&quot; search form &quot;Vught&quot;, &quot;+ 2 km&quot;, &quot;€ 400.000&quot;, &quot;Geen maximum&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Koop&quot;, &quot;Vught&quot;, &quot;+ 2 km&quot;, &quot;€ 400.000&quot;, &quot;Geen maximum&quot;) (0.7s)</pre>
+                        </td>
+                        <td>Succeeded in 0.754s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (5.1s)</pre>
+                        </td>
+                        <td>Succeeded in 5.178s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.KoopTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\KoopTests.feature.cs:line 0
+   at SearchWorkflows.KoopTestsFeature.CityDefaultRadiusAndMinimumPriceRangeSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\KoopTests.feature:line 68
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.103s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.045s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Vught, +2 km, € 400.000+&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and minimum price range search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.048s</td>
+                    </tr>
+            </table>
+            <a name="t-1793392313.0" />
+            <h3>Scenario: City, default radius and maximum price range search (in SearchWorkflows, koop Tests)</h3>
+                <div class="description">
+                    tags: koopFlows
+                </div>
+            <ul>
+                <li>Status: Succeeded</li>
+                <li>Start time: 7/7/2017 1:13:41 PM</li>
+                <li>Execution time (sec): 21.7753999</li>
+                <li>Thread: #0</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.056s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.082s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.1s)</pre>
+                        </td>
+                        <td>Succeeded in 4.199s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Koop&quot; search form &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 0&quot;, &quot;€ 400.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormInSearchForm(&quot;Koop&quot;, &quot;Amsterdam&quot;, &quot;+ 2 km&quot;, &quot;€ 0&quot;, &quot;€ 400.000&quot;) (0.8s)</pre>
+                        </td>
+                        <td>Succeeded in 0.835s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (7.2s)</pre>
+                        </td>
+                        <td>Succeeded in 7.257s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.05s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;koop&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;koop&quot;) (4.1s)</pre>
+                        </td>
+                        <td>Succeeded in 4.099s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam, +2 km, € 0 - € 400.000&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City, default radius and maximum price range search] -->
+                            <pre class="log">done: KoopSteps.ThenISeeLastSearchAs(&quot;Amsterdam, +2 km,...&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.102s</td>
+                    </tr>
+            </table>
+            <a name="t-1893756472.0" />
+            <h3>Scenario: City and default radius search (in SearchWorkflows, Nieuwbouw Tests)</h3>
+                <div class="description">
+                    tags: nieuwbouwFlows
+                </div>
+            <ul>
+                <li>Status: Succeeded</li>
+                <li>Start time: 7/7/2017 1:14:02 PM</li>
+                <li>Execution time (sec): 20.6451262</li>
+                <li>Thread: #0</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City and default radius search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.065s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City and default radius search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.08s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;nieuwbouw&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City and default radius search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;nieuwbouw&quot;) (3.8s)</pre>
+                        </td>
+                        <td>Succeeded in 3.869s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Nieuwbouw&quot; search form &quot;Amsterdam&quot; and &quot;+ 0 km&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City and default radius search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormAnd(&quot;Nieuwbouw&quot;, &quot;Amsterdam&quot;, &quot;+ 0 km&quot;) (0.4s)</pre>
+                        </td>
+                        <td>Succeeded in 0.41s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City and default radius search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (6.8s)</pre>
+                        </td>
+                        <td>Succeeded in 6.825s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City and default radius search] -->
+                            <pre class="log">done: KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.056s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;nieuwbouw&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City and default radius search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;nieuwbouw&quot;) (4.1s)</pre>
+                        </td>
+                        <td>Succeeded in 4.152s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City and default radius search] -->
+                            <pre class="log">done: KoopSteps.ThenISeeLastSearchAs(&quot;Amsterdam&quot;) (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.096s</td>
+                    </tr>
+            </table>
+            <a name="t690201003.0" />
+            <h3>Scenario: City and radius search (in SearchWorkflows, Nieuwbouw Tests)</h3>
+                <div class="description">
+                    tags: nieuwbouwFlows
+                </div>
+            <ul>
+                <li>Status: Failed</li>
+                <li>Start time: 7/7/2017 1:14:23 PM</li>
+                <li>Execution time (sec): 17.4884742</li>
+                <li>Thread: #0</li>
+                <li>Error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given browser local data is cleared</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City and radius search] -->
+                            <pre class="log">done: KoopSteps.GivenBrowserLocalDataIsCleared() (5.0s)</pre>
+                        </td>
+                        <td>Succeeded in 5.055s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">And there is internet connection</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City and radius search] -->
+                            <pre class="log">done: KoopSteps.GivenThereIsInternetConnection() (0.0s)</pre>
+                        </td>
+                        <td>Succeeded in 0.075s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Given funda website is opened on &quot;nieuwbouw&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestArrange: Scenario - City and radius search] -->
+                            <pre class="log">done: KoopSteps.GivenFundaWebsiteIsOpenedOnTab(&quot;nieuwbouw&quot;) (4.2s)</pre>
+                        </td>
+                        <td>Succeeded in 4.269s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I fill in &quot;Nieuwbouw&quot; search form &quot;Vught&quot; and &quot;+ 5 km&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City and radius search] -->
+                            <pre class="log">done: KoopSteps.WhenIFillInSearchFormAnd(&quot;Nieuwbouw&quot;, &quot;Vught&quot;, &quot;+ 5 km&quot;) (0.3s)</pre>
+                        </td>
+                        <td>Succeeded in 0.399s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I click Search</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City and radius search] -->
+                            <pre class="log">done: KoopSteps.WhenIClickSearch() (6.5s)</pre>
+                        </td>
+                        <td>Succeeded in 6.6s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then the page title will show the search result for &quot;Amsterdam&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City and radius search] -->
+                            <pre class="log">error:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False</pre>
+                                <div class="errorMessage">  Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+</div>
+                                <pre class="stackTrace">NUnit.Framework.AssertionException:   Search result is not displayed correctly.
+  Expected: True
+  But was:  False
+
+   at NUnit.Framework.Assert.ReportFailure(String message)
+   at NUnit.Framework.Assert.ReportFailure(ConstraintResult result, String message, Object[] args)
+   at NUnit.Framework.Assert.That[TActual](TActual actual, IResolveConstraint expression, String message, Object[] args)
+   at NUnit.Framework.Assert.IsTrue(Boolean condition, String message, Object[] args)
+   at LastSearchWorkflows.KoopSteps.ThenThePageTitleWillShowTheSearchResultFor(String city) in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\TestsSteps.cs:line 68
+   at lambda_method(Closure , IContextManager , String )
+   at TechTalk.SpecFlow.Bindings.BindingInvoker.InvokeBinding(IBinding binding, IContextManager contextManager, Object[] arguments, ITestTracer testTracer, TimeSpan&amp; duration)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStepMatch(BindingMatch match, Object[] arguments)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.ExecuteStep(StepInstance stepInstance)
+   at TechTalk.SpecFlow.Infrastructure.TestExecutionEngine.OnAfterLastStep()
+   at TechTalk.SpecFlow.TestRunner.CollectScenarioErrors()
+   at SearchWorkflows.NieuwbouwTestsFeature.ScenarioCleanup() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\NieuwbouwTests.feature.cs:line 0
+   at SearchWorkflows.NieuwbouwTestsFeature.CityAndRadiusSearch() in c:\Users\Mita\Documents\TestAutomationWithCSharp-master\Tests\NieuwbouwTests.feature:line 23
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.ExecuteInternal(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TaskExecutors.StaticOrInstanceMethodExecutor.Execute(ITestThreadExecutionContext testThreadExecutionContext)
+   at TechTalk.SpecRun.Framework.TestAssemblyExecutor.ExecuteTestNodeTask(TestNode testNode, ITaskExecutor task, TraceEventType eventType)</pre>
+                        </td>
+                        <td>Failed in 0.109s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">When I go to funda homepage on &quot;nieuwbouw&quot; tab</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAct: Scenario - City and radius search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.053s</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <pre class="log">Then I see last search as &quot;Vught, +5 km&quot;</pre>
+                        </td>
+                        <td>
+                            <!-- [TestAssert: Scenario - City and radius search] -->
+                            <pre class="log">skipped because of previous errors</pre>
+                        </td>
+                        <td>Skipped in 0.094s</td>
+                    </tr>
+            </table>
+            <a name="t823454587.0" />
+            <h3>Scenario: City and default radius search (in SearchWorkflows, Recreatie Tests)</h3>
+                <div class="description">
+                    tags: recreatieFlows
+                </div>
+            <ul>
+                <li>Status: Skipped</li>
+                <li>Start time: 7/7/2017 1:14:41 PM</li>
+                <li>Execution time (sec): 0</li>
+                <li>Thread: #-1</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+            </table>
+            <a name="t-1758930152.0" />
+            <h3>Scenario: City and radius search (in SearchWorkflows, Recreatie Tests)</h3>
+                <div class="description">
+                    tags: recreatieFlows
+                </div>
+            <ul>
+                <li>Status: Skipped</li>
+                <li>Start time: 7/7/2017 1:14:41 PM</li>
+                <li>Execution time (sec): 0</li>
+                <li>Thread: #-1</li>
+            </ul>
+            <table class="testEvents">
+                <tr>
+                    <th>Steps</th>
+                    <th>Trace</th>
+                    <th>Result</th>
+                </tr>
+            </table>
+	</body>
+</html>
+</a><div style='position: absolute; top:0px; right:10px; z-index: 1000; text-align: right; font-size: small; color: #FF5555'>
+Generated by an evaluation version of SpecRun.<br />
+This version can be used for evaluation purposes only.<br />
+For obtaining a registered license please visit <a href='http://www.specflow.org/plus'>http://www.specflow.org/plus</a>.
+</div>
